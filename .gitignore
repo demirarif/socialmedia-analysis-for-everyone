@@ -1,0 +1,47 @@
+# Secrets and local sessions
+.env
+.env.*
+!.env.example
+.ig_session*
+*session*.json
+cookies*
+*.pem
+*.key
+
+# Runtime, private analysis data and downloads
+.runtime/
+instance/
+exports/
+downloads/
+outputs/
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+*.log
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.pdf
+*.json
+!weights.json
+
+# Python / tooling
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

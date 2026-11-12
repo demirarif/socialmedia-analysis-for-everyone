@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>{{ platform_label | default("Sosyal Medya") }} Performans Raporu</title>
+<style>
+    @page { size: A4 portrait; margin: 18mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.6; color: #1e293b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page-container { background: white; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; gap: 20px; }
+    .justify-center { justify-content: center; }
+    .grid { display: grid; }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .gap-6 { gap: 16px; }
+    .border-b-2 { border-bottom: 2px solid #e0e7ff; }
+    .border-t { border-top: 1px solid #e2e8f0; }
+    .border { border: 1px solid #e2e8f0; }
+    .pb-6 { padding-bottom: 22px; }
+    .pt-8 { padding-top: 18px; }
+    .p-6 { padding: 18px; }
+    .p-8 { padding: 22px; }
+    .mb-6 { margin-bottom: 18px; }
+    .mb-8 { margin-bottom: 26px; }
+    .mb-10 { margin-bottom: 30px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-16 { margin-top: 34px; }
+    .mr-4 { margin-right: 12px; }
+    .w-20 { width: 65px; flex-shrink: 0; }
+    .h-20 { height: 65px; }
+    .w-10 { width: 34px; flex-shrink: 0; }
+    .h-10 { height: 34px; }
+    .w-6 { width: 22px; }
+    .h-6 { height: 22px; }
+    .rounded-full { border-radius: 50%; }
+    .rounded-2xl, .rounded-3xl { border-radius: 12px; }
+    .text-4xl { font-size: 27pt; }
+    .text-3xl { font-size: 25pt; }
+    .text-2xl { font-size: 17pt; }
+    .text-lg { font-size: 12pt; }
+    .text-sm { font-size: 9pt; }
+    .font-bold, .font-extrabold { font-weight: bold; }
+    .text-slate-400, .text-slate-500 { color: #64748b; }
+    .text-slate-900 { color: #0f172a; }
+    .text-indigo-600, .gradient-text { color: #6d28d9; }
+    .text-white { color: white; }
+    .text-center { text-align: center; }
+    .bg-white { background: #f8fafc; break-inside: avoid; }
+    .bg-gradient-to-tr, .bg-indigo-500 { background: #6d28d9; }
+    .bg-slate-900 { background: #0f172a; }
+    .uppercase { text-transform: uppercase; letter-spacing: .7px; }
+    .prose { overflow-wrap: anywhere; }
+    h1, h2 { margin: 0; line-height: 1.2; }
+    .prose h2, .prose h3, .prose h4 { break-after: avoid; margin-top: 18px; margin-bottom: 8px; }
+    .prose p { margin: 0 0 12px; }
+    .prose ul, .prose ol { padding-left: 22px; }
+    .prose li { margin-bottom: 6px; }
+    .prose blockquote { margin: 16px 0; padding-left: 14px; border-left: 3px solid #c4b5fd; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+<div class="page-container">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b-2 border-indigo-100 pb-6 mb-8">
+        <div>
+            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Yönetici <span class="gradient-text">Özet Raporu</span></h1>
+            <p class="text-slate-500 mt-2 text-lg font-medium">{{ platform_label | default("Sosyal Medya") }} · @{{ profile.username }} İçerik ve Performans Analizi</p>
+        </div>
+        <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+            {{ profile.username[0]|upper if profile.username else '?' }}
+        </div>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-2 gap-6 mb-10">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col">
+            <span class="text-sm font-semibold text-slate-400 uppercase tracking-wider">{{ "Abone Sayısı" if platform_label == "YouTube" else "Takipçi Sayısı" }}</span>
+            <span class="text-3xl font-bold text-slate-800 mt-2">{{ "{:,}".format(profile.followers).replace(',','.') if profile.followers is number else 'Mevcut değil' }}</span>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col">
+            <span class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Etkileşim Oranı</span>
+            <span class="text-3xl font-bold text-indigo-600 mt-2">{{ '%' ~ stats.engagement_rate if stats.engagement_rate is number else 'Mevcut değil' }}</span>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col">
+            <span class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Ortalama Beğeni</span>
+            <span class="text-3xl font-bold text-slate-800 mt-2">{{ "{:,}".format(stats.avg_likes).replace(',','.') if stats.avg_likes is number else 'Mevcut değil' }}</span>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col">
+            <span class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Ortalama Yorum</span>
+            <span class="text-3xl font-bold text-slate-800 mt-2">{{ "{:,}".format(stats.avg_comments).replace(',','.') if stats.avg_comments is number else 'Mevcut değil' }}</span>
+        </div>
+    </div>
+
+    <!-- AI Analysis -->
+    <div class="bg-slate-900 rounded-3xl p-8 shadow-xl text-white">
+        <div class="flex items-center mb-6">
+            <div class="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold">Yapay Zeka (Gemini) Analizi</h2>
+        </div>
+        
+        <div class="prose prose-invert prose-lg max-w-none prose-ul:list-disc prose-ul:ml-5 prose-li:mb-2">
+            <!-- The backend sanitizes AI HTML through _safe_ai_html before rendering. -->
+            {{ ai_analysis | safe }}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-16 pt-8 border-t border-slate-200 text-center text-sm text-slate-400">
+        Social Media Analysis for Everyone · İsteğe bağlı Google Gemini analizi.<br>Seçilen örneklemde gözlenen metriklerdir. AI yorumları ve tahminler doğruluk veya sonuç garantisi değildir.
+    </div>
+</div>
+
+</body>
+</html>

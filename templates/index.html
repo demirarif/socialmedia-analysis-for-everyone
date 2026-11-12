@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Analysis for Everyone</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Charts (ApexCharts) -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Instagram Oturum Bağlantısı</h3>
+            <button class="icon-btn" onclick="closeLoginModal()"><i data-lucide="x"></i></button>
+        </div>
+        <p class="modal-desc">Analiz için kendi kontrolünüzdeki ayrı/ikincil bir Instagram hesabını da kullanabilirsiniz. Böyle bir hesabı Instagram üzerinden kendiniz oluşturup doğrulayın; uygulama hesap oluşturmaz. Yeni veya az kullanılan hesaplar için Instagram ek doğrulama ya da kullanım kısıtı uygulayabilir.</p>
+        <div class="login-tabs" role="tablist" aria-label="Instagram bağlantı yöntemi">
+            <button type="button" class="login-tab active" role="tab" aria-selected="true" aria-controls="loginCookiePane" onclick="switchLoginTab('cookie')" id="tabCookie">Session ID</button>
+            <button type="button" class="login-tab" role="tab" aria-selected="false" aria-controls="loginPasswordPane" onclick="switchLoginTab('password')" id="tabPassword">Kullanıcı Adı ve Şifre</button>
+        </div>
+        <div id="loginCookiePane" class="login-pane active" role="tabpanel" aria-labelledby="tabCookie">
+            <p class="modal-desc"><strong>Session ID nedir?</strong> <code>sessionid</code>, tarayıcıda Instagram'a giriş yaptığınızda oluşan oturum çerezidir. Uygulama, şifrenizi istemeden bu çerezle Instagram'a veri istekleri gönderir.</p>
+            <div class="session-warning"><strong>Şifreniz kadar gizli tutun.</strong> Bu değeri alan biri hesabınızın oturumunu kullanabilir. Yalnız kendi bilgisayarınızda çalışan bu uygulamaya girin; GitHub'a, mesajlara veya AI sohbetlerine yapıştırmayın.</div>
+            <div class="form-group">
+                <label for="cookieInput">Session ID</label>
+                <input type="password" id="cookieInput" class="form-input" autocomplete="off" spellcheck="false" placeholder="Yalnız sessionid çerezinin Value değerini yapıştırın" aria-describedby="sessionStorageNote">
+            </div>
+            <div class="howto">
+                <strong>Nasıl alınır? (Chrome / Edge)</strong>
+                <ol>
+                    <li>Aynı bilgisayardaki tarayıcıda <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">instagram.com</a> adresine kendi hesabınızla giriş yapın.</li>
+                    <li><code>F12</code> veya <code>Ctrl + Shift + I</code> ile geliştirici araçlarını açın (Mac: <code>⌘ + ⌥ + I</code>).</li>
+                    <li><strong>Application (Uygulama) → Storage → Cookies → https://www.instagram.com</strong> yolunu açın.</li>
+                    <li><code>sessionid</code> satırındaki <strong>Value (Değer)</strong> alanını kopyalayıp yukarıya yapıştırın. Başına <code>sessionid=</code> eklemeyin.</li>
+                </ol>
+                <p>Firefox: <strong>Storage (Depolama) → Cookies → https://www.instagram.com</strong>. Tablo görünmüyorsa paneli genişletin.</p>
+            </div>
+            <p class="modal-desc" id="sessionStorageNote">Çerez, bu uygulamayı çalıştırdığınız bilgisayarda <code>.runtime/ig_session.json</code> dosyasında düz metin saklanır. Uygulamada Çıkış bu dosyayı siler; Instagram oturumunu iptal etmek için Instagram'ın giriş hareketlerinden ilgili oturumu kapatın. Süresi dolarsa yeni değer alın.</p>
+        </div>
+        <div id="loginPasswordPane" class="login-pane" role="tabpanel" aria-labelledby="tabPassword">
+            <p class="modal-desc">Kendi hesabınızın veya ayrı/ikincil hesabınızın bilgileriyle doğrudan giriş yapabilirsiniz. Şifre, yerel uygulamadan yalnız Instagram'a giriş isteği için gönderilir; dosyaya veya tarayıcı depolamasına kaydedilmez. Başarılı girişten sonra yalnız oturum çerezi saklanır.</p>
+            <div class="form-group">
+                <label for="igUsername">Instagram Kullanıcı Adı</label>
+                <input type="text" id="igUsername" class="form-input" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="kullaniciadi">
+            </div>
+            <div class="form-group">
+                <label for="igPassword">Instagram Şifresi</label>
+                <input type="password" id="igPassword" class="form-input" autocomplete="off" placeholder="Instagram şifreniz">
+            </div>
+            <div class="howto"><strong>Giriş tamamlanamazsa:</strong> Instagram iki adımlı doğrulama veya güvenlik kontrolü isteyebilir. Tarayıcıda Instagram'a giriş yapıp doğrulamayı tamamlayın, ardından <strong>Session ID</strong> sekmesindeki yöntemi kullanın.</div>
+            <p class="modal-desc">Bu bilgileri yalnız kendi bilgisayarınızda çalışan uygulamaya girin. Şifrenizi GitHub'a veya AI sohbetlerine göndermeyin. Kaydedilen çerez <code>.runtime/ig_session.json</code> dosyasında düz metindir. Uygulamada Çıkış yerel dosyayı siler; oturumu Instagram'dan da kapatabilirsiniz.</p>
+        </div>
+        <div class="error-text" id="loginError"></div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="submitLogin()" id="loginSubmitBtn">Session ID ile Bağlan</button>
+            <button class="btn btn-outline" onclick="closeLoginModal()">İptal</button>
+        </div>
+    </div>
+</div>
+
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-row">
+                <div class="brand-icon"><i data-lucide="bar-chart-2"></i></div>
+                <span id="brandTitle">Sosyal Medya Analiz</span>
+            </div>
+            <div class="platform-switcher" id="platformSwitcher" role="group" aria-label="Analiz platformu">
+                <button type="button" class="platform-btn active" data-platform="instagram" aria-pressed="true" onclick="setPlatform('instagram')">Instagram</button>
+                <button type="button" class="platform-btn" data-platform="tiktok" aria-pressed="false" onclick="setPlatform('tiktok')">TikTok</button>
+                <button type="button" class="platform-btn" data-platform="youtube" aria-pressed="false" onclick="setPlatform('youtube')">YouTube</button>
+            </div>
+        </div>
+                <nav class="sidebar-nav">
+            <div class="nav-section">ANA MENÜ</div>
+            <a href="#" class="nav-item active" data-tab="dashboard">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Genel Bakış</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="compare">
+                <i data-lucide="pie-chart"></i>
+                <span>Karşılaştırma</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="content-dna" data-instagram-only="true">
+                <i data-lucide="dna"></i>
+                <span>İçerik DNA Analizi</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="sponsorship" data-instagram-only="true">
+                <i data-lucide="badge-dollar-sign"></i>
+                <span>Sponsorluk & ROI</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer" id="instagramAuthPanel">
+            <div class="user-status">
+                <div class="status-indicator" id="loginDot"></div>
+                <div class="status-text" id="loginInfoText">Giriş yapılmadı</div>
+            </div>
+            <div class="auth-buttons">
+                <button class="btn btn-sm btn-outline" id="loginBtn" onclick="openLoginModal()">Giriş Yap</button>
+                <button class="btn btn-sm btn-outline" id="logoutBtn" onclick="doLogout()" style="display:none;">Çıkış</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Toast Notification -->
+        <div class="toast" id="toast">Bildirim mesajı</div>
+
+        <!-- PAGE 1: GENEL BAKIŞ -->
+        <div id="page-dashboard" class="page active">
+            <header class="page-header" style="display:flex; align-items:center; gap:8px;">
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <h1 id="dashboardHeading">Genel Bakış</h1>
+                        <button class="icon-btn" onclick="openInfoModal('dashboard')" title="Bu sayfa nasıl çalışır?"><i data-lucide="info"></i></button>
+                    </div>
+                    <p id="dashboardDescription">Tek bir hesabın temel performans verilerini anında çekin.</p>
+                </div>
+            </header>
+
+            <section class="welcome-card" id="welcomeCard" aria-labelledby="welcomeHeading">
+                <div class="welcome-kicker" id="welcomeKicker">Kendi bilgisayarınızda • Instagram analizi</div>
+                <h2 id="welcomeHeading">Instagram oturumunuzu bağlayın, hesabı analiz edin.</h2>
+                <p id="welcomeDescription">Session ID veya kullanıcı adı ve şifreyle bağlanın. Kendi kontrolünüzdeki ayrı/ikincil bir hesabı da kullanabilirsiniz. Session ID'nin ne olduğu ve nasıl alınacağı giriş ekranında adım adım açıklanır. Oturum bilgilerinizi şifreniz gibi gizli tutun.</p>
+                <div class="welcome-actions">
+                    <button type="button" class="btn btn-primary" id="welcomeConnectButton" onclick="openLoginModal()">Instagram'a Bağlan</button>
+                    <button type="button" class="btn btn-outline" onclick="loadDemo()">Giriş yapmadan demoyu incele</button>
+                </div>
+                <p class="welcome-footnote">Temel metrikler, karşılaştırma ve Excel için AI anahtarı gerekmez. Demo tamamen yapay veridir.</p>
+            </section>
+            <p class="ai-status-note" id="aiStatusNote">AI özelliklerinin kullanılabilirliği kontrol ediliyor. Temel analiz için API anahtarı gerekmez.</p>
+
+            <div class="search-card">
+                <div class="search-inputs">
+                    <div class="input-group search-flex">
+                        <i data-lucide="search" class="input-icon"></i>
+                        <input type="text" id="igInput" placeholder="instagram.com/kullaniciadi veya @kullaniciadi">
+                    </div>
+                    <div class="input-group limit-input">
+                        <select id="timeRange" class="input-field" style="width:140px; border-radius:12px;">
+                            <option value="7">Son 1 Hafta</option>
+                            <option value="30">Son 1 Ay</option>
+                            <option value="90" selected>Son 3 Ay</option>
+                            <option value="180">Son 6 Ay</option>
+                            <option value="365">Son 1 Yıl</option>
+                            <option value="1095">Son 3 Yıl</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="fetchBtn" onclick="fetchData()">Analiz Et</button>
+                    <button type="button" class="btn btn-outline" id="demoBtn" onclick="loadDemo()">Demo</button>
+                </div>
+            </div>
+
+            <div class="alert alert-error" id="fetchErrorBox" style="display:none;">
+                <i data-lucide="alert-circle"></i>
+                <span id="fetchErrorText"></span>
+            </div>
+
+            <div class="loading-state" id="fetchLoading" style="display:none;">
+                <div class="spinner"></div>
+                <p id="fetchLoadingText">Veriler Instagram'dan çekiliyor...</p>
+            </div>
+
+            <div id="fetchResults" style="display:none;">
+                <div class="platform-data-note" id="platformDataNote" style="display:none;"></div>
+                <div class="header-actions" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="generateReportPDF()" id="pdfBtn" data-ai-feature disabled>
+                        <i data-lucide="file-text"></i> Yapay Zeka PDF Raporu İndir
+                    </button>
+                </div>
+                <!-- Profile Overview -->
+                <div class="profile-overview" id="profileCard"></div>
+                
+                <!-- KPIs -->
+                <div class="kpi-grid" id="summaryGrid"></div>
+
+                <div class="table-header">
+                    <h3 id="contentTableTitle">Son Gönderiler</h3>
+                    <div>
+                        <button class="btn btn-outline" id="excelBtn" onclick="exportExcel()"><i data-lucide="sheet"></i> Excel İndir</button>
+                        <button class="btn btn-secondary" onclick="addToCompare()"><i data-lucide="plus-circle"></i> Karşılaştırmaya Ekle</button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>İçerik Linki</th>
+                                <th>Tür</th>
+                                <th>Beğeni</th>
+                                <th>Yorum</th>
+                                <th>İzlenme</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="table-progress">
+                    <span id="tableLoadStatus">Gönderiler hazırlanıyor...</span>
+                    <div id="tableSentinel" class="table-sentinel" aria-hidden="true"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 1.5: KARŞILAŞTIRMA -->
+        <div id="page-compare" class="page">
+            <header class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <h1>Hesap Karşılaştırma</h1>
+                        <button class="icon-btn" onclick="openInfoModal('compare')" title="Karşılaştırma mantığı nedir?"><i data-lucide="info"></i></button>
+                    </div>
+                    <p>Instagram, TikTok ve YouTube hesaplarını birlikte ekleyin. Kaynaklar ve örneklemler farklıdır; sonuçlar yalnız seçilen içerikler için karşılaştırılabilir.</p>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-outline" onclick="clearCompare()"><i data-lucide="trash-2"></i> Temizle</button>
+                </div>
+            </header>
+
+            <div class="card" id="compareEmptyState" style="text-align: center; padding: 60px 40px;">
+                <i data-lucide="git-compare" style="width: 56px; height: 56px; color: var(--text-muted); margin-bottom: 16px;"></i>
+                <h3 style="margin-bottom: 8px;">Henüz Hesap Eklenmedi</h3>
+                <p style="color: var(--text-muted); max-width: 400px; margin: 0 auto; margin-bottom: 16px;">Genel Bakış sekmesinde platform seçip hesap analiz edin; ardından <strong>"Karşılaştırmaya Ekle"</strong> butonuna basarak profilleri buraya taşıyabilirsiniz.</p>
+                <button class="btn btn-primary" onclick="document.querySelector('.nav-item[data-tab=\'dashboard\']').click()"><i data-lucide="arrow-left"></i> Genel Bakış'a Git</button>
+            </div>
+
+            <div id="compareContent" style="display: none;">
+                <div id="compareSummaryStrip" class="compare-summary-strip"></div>
+                <!-- Profil Kartları -->
+                <div id="compareProfileCards" class="compare-cards-grid"></div>
+                
+                <!-- Radar Chart: Normalize Performans -->
+                <div class="grid-2" style="margin-top: 24px;">
+                    <div class="dashboard-card">
+                        <h3>Performans Karşılaştırma</h3>
+                        <div id="compareRadarChart" style="height: 340px;"></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Kitle ve Etkileşim</h3>
+                        <div id="compareBarChart" style="height: 340px;"></div>
+                    </div>
+                </div>
+
+                <!-- İçerik Dağılımı -->
+                <div class="grid-2" style="margin-top: 0;">
+                    <div class="dashboard-card">
+                        <h3>İçerik Dağılımı</h3>
+                        <div id="compareContentChart" style="height: 340px;"></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>En İyi Gönderiler</h3>
+                        <div id="compareBestPosts"></div>
+                    </div>
+                </div>
+
+                <!-- Detaylı Metrik Tablosu -->
+                <div class="dashboard-card" style="margin-top: 24px;">
+                    <h3 style="margin-bottom: 16px;">Detaylı Metrik Tablosu</h3>
+                    <div class="table-container" style="overflow-x: auto;">
+                        <table class="data-table" id="compareTable">
+                            <thead>
+                                <tr>
+                                    <th>Metrik</th>
+                                    <!-- JS dolduracak -->
+                                </tr>
+                            </thead>
+                            <tbody id="compareTableBody">
+                                <!-- JS dolduracak -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Teknik Yorum -->
+                <div class="dashboard-card" style="margin-top: 24px;">
+                    <h3 style="margin-bottom: 16px;">Teknik Analiz Yorumu</h3>
+                    <div id="compareTechnicalNotes" class="strategy-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 3: SPONSORLUK ROI -->
+        <div id="page-sponsorship" class="page">
+            <header class="page-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h1>Sponsorluk & UGC Değerlemesi</h1>
+                    <button class="icon-btn" onclick="openInfoModal('sponsorship')" title="Bu değerleme nasıl hesaplanıyor?"><i data-lucide="info"></i></button>
+                </div>
+                <p>Hesap tipine, normalize performansa ve içerik formatına göre otomatik teklif bandı üretin.</p>
+            </header>
+
+            <div class="search-card">
+                <div class="search-inputs">
+                    <div class="input-group search-flex">
+                        <i data-lucide="search" class="input-icon"></i>
+                        <input type="text" id="spInput" placeholder="instagram.com/kullaniciadi veya @kullaniciadi">
+                    </div>
+
+                    <div class="input-group limit-input" style="width: 150px;">
+                        <select id="spTimeRange" class="input-field" style="padding-left:14px; border-radius:12px;">
+                            <option value="7">Son 1 Hafta</option>
+                            <option value="30">Son 1 Ay</option>
+                            <option value="90" selected>Son 3 Ay</option>
+                            <option value="180">Son 6 Ay</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group limit-input" style="width: 220px;">
+                        <select id="spPageType" class="input-field" style="padding-left:14px; border-radius:12px;">
+                            <option value="influencer" selected>Influencer</option>
+                            <option value="meme">Meme Sayfası</option>
+                            <option value="community">Topluluk Sayfası</option>
+                            <option value="local">Yerel / Şehir Sayfası</option>
+                            <option value="niche">Niş İçerik Sayfası</option>
+                            <option value="media">Medya / Haber Sayfası</option>
+                            <option value="curation">Tematik Kürasyon Sayfası</option>
+                            <option value="youth">Kampüs / Gençlik Sayfası</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary" id="spFetchBtn" onclick="fetchSponsorship()">Teklif Oluştur</button>
+                    <button class="btn btn-outline" type="button" id="spPdfBtn" onclick="exportSponsorshipPDF()" disabled>
+                        <i data-lucide="download"></i> PDF İndir
+                    </button>
+                </div>
+            </div>
+
+            <div class="alert alert-error" id="spErrorBox" style="display:none;">
+                <i data-lucide="alert-circle"></i>
+                <span id="spErrorText"></span>
+            </div>
+
+            <div class="loading-state" id="spLoading" style="display:none;">
+                <div class="spinner"></div>
+                <p>Normalize performans, hesap tipi etkisi ve format senaryoları modelleniyor...</p>
+            </div>
+
+            <div id="spResults" style="display:none;">
+                <div class="profile-overview" id="spProfileCard"></div>
+                <div class="sp-hero-panel">
+                    <div class="sp-hero-copy">
+                        <div class="sp-hero-kicker">Fiyatlama Motoru</div>
+                        <h3 id="spHeroTitle">Seçilen hesap için teklif bandı hazırlanıyor</h3>
+                        <p id="spHeroDesc">Hesap tipi ve normalize performans etkileri burada özetlenecek.</p>
+                        <div class="sp-chip-row" id="spDriverChips"></div>
+                    </div>
+                    <div class="sp-confidence-card" id="spConfidenceCard"></div>
+                </div>
+                <div class="kpi-grid" id="spOverviewGrid"></div>
+                <div class="grid-2">
+                    <div class="dashboard-card">
+                        <h3>Format Bazlı Performans</h3>
+                        <div class="sp-format-stack" id="spFormatMetrics"></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Değerleme Notları</h3>
+                        <div class="strategy-list" id="spInsights"></div>
+                    </div>
+                </div>
+                <div class="sp-offer-header">
+                    <div>
+                        <h3>Önerilen İşbirliği Paketleri</h3>
+                        <p id="spOfferSubtext">Dar teklif bantları, seçilen dönem ve hesap tipi etkisine göre üretilir.</p>
+                    </div>
+                </div>
+                <div class="sponsorship-grid" id="spOptions"></div>
+            </div>
+        </div>
+
+        <!-- PAGE 4: İÇERİK DNA ANALİZİ -->
+        <div id="page-content-dna" class="page">
+            <header class="page-header">
+                <div>
+                    <h1>İçerik DNA Analizi (AI)</h1>
+                    <p>En başarılı içeriklerinizin görsel ve metinsel ortak özelliklerini keşfedin.</p>
+                </div>
+            </header>
+
+            <div class="search-card">
+                <div class="search-inputs">
+                    <div class="input-group search-flex">
+                        <i data-lucide="search" class="input-icon"></i>
+                        <input type="text" id="dnaInput" placeholder="instagram.com/kullaniciadi veya @kullaniciadi">
+                    </div>
+                    <div class="input-group limit-input">
+                        <select id="dnaTimeRange" class="input-field" style="width:140px; border-radius:12px;">
+                            <option value="7">Son 1 Hafta</option>
+                            <option value="30">Son 1 Ay</option>
+                            <option value="90" selected>Son 3 Ay</option>
+                            <option value="180">Son 6 Ay</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="dnaFetchBtn" data-ai-feature disabled onclick="fetchContentDNA()">Analiz Et</button>
+                </div>
+            </div>
+
+            <p class="ai-status-note" id="dnaAiNote">İçerik DNA ve AI PDF raporu isteğe bağlıdır. Kendi Gemini API anahtarınızı .env dosyasına ekleyebilirsiniz; sağlayıcı kullanım ücreti uygulayabilir. Görseller, açıklamalar ve yorumlar yalnız AI analizini başlattığınızda Gemini’ye gönderilir.</p>
+
+            <div class="alert alert-error" id="dnaErrorBox" style="display:none;">
+                <i data-lucide="alert-circle"></i>
+                <span id="dnaErrorText"></span>
+            </div>
+
+            <div class="loading-state" id="dnaLoading" style="display:none;">
+                <div class="spinner"></div>
+                <p>Gemini Vision API içeriklerin kapak fotoğraflarını ve metinlerini inceliyor...</p>
+            </div>
+
+            <div id="dnaResults" style="display:none; margin-top:24px;">
+                <p class="platform-data-note" id="dnaRankingNote"></p>
+                <div class="dashboard-card" style="margin-bottom: 24px; border-left: 4px solid var(--success);">
+                    <h3 style="margin-bottom: 16px;"><i data-lucide="check-circle" style="color:var(--success); width:18px; height:18px; vertical-align:middle; margin-right:8px;"></i>En Başarılı Gönderiler</h3>
+                    <div id="dnaBestPostsList" style="display: flex; flex-direction: column; gap: 24px;"></div>
+                </div>
+
+                <div class="dashboard-card" style="margin-bottom: 24px; border-left: 4px solid var(--danger);">
+                    <h3 style="margin-bottom: 16px;"><i data-lucide="alert-triangle" style="color:var(--danger); width:18px; height:18px; vertical-align:middle; margin-right:8px;"></i>Geliştirilmesi Gereken Gönderiler</h3>
+                    <div id="dnaWorstPostsList" style="display: flex; flex-direction: column; gap: 24px;"></div>
+                </div>
+
+                <div class="dashboard-card" style="border-left: 4px solid var(--warning);">
+                    <h3 style="margin-bottom: 16px;"><i data-lucide="lightbulb" style="color:var(--warning); width:18px; height:18px; vertical-align:middle; margin-right:8px;"></i>Genel Strateji ve Kreatif Öneri</h3>
+                    <div id="dnaOverallStrategy" style="font-size:15px; color:var(--text-secondary); line-height:1.7; padding: 16px; background: rgba(243, 156, 18, 0.05); border-radius: 8px;"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Info Modal -->
+<div class="modal-overlay" id="infoModalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="infoModalTitle">Analiz Hakkında</h3>
+            <button class="icon-btn" onclick="closeInfoModal()"><i data-lucide="x"></i></button>
+        </div>
+        <div id="infoModalContent" style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; max-height: 400px; overflow-y: auto;">
+            <!-- JS Dolduracak -->
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="/static/js/main.js"></script>
+</body>
+</html>
